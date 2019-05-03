@@ -42,37 +42,37 @@ class AesTester(dut: Aes) extends Tester(dut) {
     write(value.litValue(), addr.litValue())
   }
 
-  // // Write block into aes device
-  // for (i <- 0 until 4) {
-  //   val row = Cat(
-  //     testBlock(i*4+3),
-  //     testBlock(i*4+2),
-  //     testBlock(i*4+1),
-  //     testBlock(i*4)
-  //   )
-  //   send(row, AesAddr.BLOCK_IN + (i*4).U)
-  // }
-  // step(1)
+  // Write block into aes device
+  for (i <- 0 until 4) {
+    val row = Cat(
+      testBlock(i*4+3),
+      testBlock(i*4+2),
+      testBlock(i*4+1),
+      testBlock(i*4)
+    )
+    send(row, AesAddr.BLOCK_IN + (i*4).U)
+  }
+  step(1)
   
-  // for (i <- 0 until 16) {
-  //   expect(dut.io.blockIn(i), testBlock(i).litValue())
-  // }
+  for (i <- 0 until 16) {
+    expect(dut.io.blockIn(i), testBlock(i).litValue())
+  }
   
-  // // Write key into aes device
-  // for (i <- 0 until 4) {
-  //   val row = Cat(
-  //     testKey(i*4+3),
-  //     testKey(i*4+2),
-  //     testKey(i*4+1),
-  //     testKey(i*4)
-  //   )
-  //   send(row, AesAddr.KEY + (i*4).U)
-  // }
-  // step(1)
+  // Write key into aes device
+  for (i <- 0 until 4) {
+    val row = Cat(
+      testKey(i*4+3),
+      testKey(i*4+2),
+      testKey(i*4+1),
+      testKey(i*4)
+    )
+    send(row, AesAddr.KEY + (i*4).U)
+  }
+  step(1)
 
-  // for (i <- 0 until 16) {
-  //   expect(dut.io.key(i), testKey(i).litValue())
-  // }
+  for (i <- 0 until 16) {
+    expect(dut.io.key(i), testKey(i).litValue())
+  }
   
   // Start computation
   write(1.U, AesAddr.START)

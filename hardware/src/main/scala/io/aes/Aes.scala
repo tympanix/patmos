@@ -47,8 +47,12 @@ class Aes() extends CoreDevice() {
   // Internal modules
   val aesCore = Module(new AesCore)
 
+  val stall = Bool()
+  stall := false.B
+
   // Register for requests from OCP master
-  val masterReg = Reg(next = io.ocp.M)
+  val masterReg = Reg(io.ocp.M)
+  masterReg := Mux(stall, masterReg, io.ocp.M)
   
   // Local address for core device
   val localAddr = Wire(Bits(width = 16))
@@ -89,8 +93,10 @@ class Aes() extends CoreDevice() {
 
     // Read aes block result
     when (blockOutMask) {
+      stall := true.B
       val offset = localAddr(7,0)
       when (!busy) {
+        stall := false.B
         io.ocp.S.Resp := OcpResp.DVA
         io.ocp.S.Data := Cat(
           aesCore.io.blockOut(offset+3.U),
@@ -127,9 +133,11 @@ class Aes() extends CoreDevice() {
 
     // Start computation
     when (localAddr === AesAddr.START) {
+      stall := true.B
       aesCore.io.validIn := true.B
 
       when (aesCore.io.readyOut) {
+        stall := false.B
         io.ocp.S.Resp := OcpResp.DVA
         busy := true.B
       }

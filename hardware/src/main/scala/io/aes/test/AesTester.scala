@@ -19,6 +19,7 @@ class AesTester(dut: Aes) extends Tester(dut) {
     poke(dut.io.ocp.M.Cmd, OcpCmd.RD.litValue())
     poke(dut.io.ocp.M.Addr, addr)
     step(1)
+    poke(dut.io.ocp.M.Cmd, OcpCmd.IDLE.litValue())
     while (peek(dut.io.ocp.S.Resp) != OcpResp.DVA.litValue()) {
       step(1)
     }
@@ -35,6 +36,7 @@ class AesTester(dut: Aes) extends Tester(dut) {
     poke(dut.io.ocp.M.Addr, addr)
     poke(dut.io.ocp.M.ByteEn, Bits("b1111").litValue())
     step(1)
+    poke(dut.io.ocp.M.Cmd, OcpCmd.IDLE.litValue())
     while (peek(dut.io.ocp.S.Resp) != OcpResp.DVA.litValue()) {
       step(1)
     }
@@ -70,7 +72,7 @@ class AesTester(dut: Aes) extends Tester(dut) {
 
   // Start computation
   write(1.U, AesAddr.START)
-  step(1)
+  step(25)
 
   // Read out block from aes device
   for (i <- 0 until 4) {

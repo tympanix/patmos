@@ -14,6 +14,8 @@ object Aes extends DeviceObject {
 
   trait Pins {
     val blockIn = Output(Vec(16, UInt(width = 8)))
+    val key = Output(Vec(32, UInt(width = 8)))
+    val blockOut = Output(Vec(16, UInt(width = 8)))
   }
 }
 
@@ -32,6 +34,7 @@ object AesMode {
 // Constants for aes local address space
 object AesAddr {
   val CONF       = Bits("h0000")
+  val START      = Bits("h0004")
   val KEY        = Bits("h1000")
   val BLOCK_IN   = Bits("h2000")
   val BLOCK_OUT  = Bits("h3000")
@@ -52,6 +55,8 @@ class Aes() extends CoreDevice() {
   localAddr := masterReg.Addr(15,0)
 
   val blockInMask = (localAddr(15,12) === AesAddr.BLOCK_IN(15,12))
+  val keyMask = (localAddr(15,12) === AesAddr.KEY(15,12))
+  val blockOutMask = (localAddr(15,12) === AesAddr.BLOCK_OUT(15,12))
 
   val key = Mem(UInt(width = 8), 32)
   val blockIn = Mem(UInt(width = 8), 16)
@@ -61,6 +66,8 @@ class Aes() extends CoreDevice() {
 
   // Default output
   io.blockIn := blockIn
+  io.key := key
+  io.blockOut := blockOut
 
   // Default OCP response
   io.ocp.S.Resp := OcpResp.NULL
@@ -70,6 +77,18 @@ class Aes() extends CoreDevice() {
   when (masterReg.Cmd === OcpCmd.RD) {
     io.ocp.S.Resp := OcpResp.DVA
     io.ocp.S.Data := contentReg + 5.U
+
+    // Read aes block result
+    when (blockOutMask) {
+      io.ocp.S.Resp := OcpResp.DVA
+      val offset = localAddr(7,0)
+      io.ocp.S.Data := Cat(
+        blockOut(offset+3.U),
+        blockOut(offset+2.U),
+        blockOut(offset+1.U),
+        blockOut(offset+0.U)
+      )
+    }
   }
 
   // Handle OCP writes
@@ -83,6 +102,23 @@ class Aes() extends CoreDevice() {
         when (masterReg.ByteEn(i) === Bits(1)) {
           blockIn(localAddr(7,0) + i.U) := masterReg.Data(8*i+7, 8*i)
         }
+      }
+    }
+
+    // Write to aes key
+    when(keyMask) {
+      for (i <- 0 until masterReg.ByteEn.getWidth) {
+        when (masterReg.ByteEn(i) === Bits(1)) {
+          key(localAddr(7,0) + i.U) := masterReg.Data(8*i+7, 8*i)
+        }
+      }
+    }
+
+    // Start computation
+    when (localAddr === AesAddr.START) {
+      io.ocp.S.Resp := OcpResp.DVA
+      for (i <- 0 until 16) {
+        blockOut(i) := (i+1).U
       }
     }
   }

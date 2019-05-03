@@ -12,7 +12,9 @@ object Aes extends DeviceObject {
     Module(new Aes())
   }
 
-  trait Pins {}
+  trait Pins {
+    val blockIn = Output(Vec(16, UInt(width = 8)))
+  }
 }
 
 // Constants for aes key lengths
@@ -46,14 +48,19 @@ class Aes() extends CoreDevice() {
   val masterReg = Reg(next = io.ocp.M)
   
   // Local address for core device
-  val localAddr = Bits(width = 16)
+  val localAddr = Wire(Bits(width = 16))
   localAddr := masterReg.Addr(15,0)
+
+  val blockInMask = (localAddr(15,12) === AesAddr.BLOCK_IN(15,12))
 
   val key = Mem(UInt(width = 8), 32)
   val blockIn = Mem(UInt(width = 8), 16)
   val blockOut = Mem(UInt(width = 8), 16)
   
   val contentReg = Reg(init = UInt(42, width = DATA_WIDTH))
+
+  // Default output
+  io.blockIn := blockIn
 
   // Default OCP response
   io.ocp.S.Resp := OcpResp.NULL
@@ -71,12 +78,10 @@ class Aes() extends CoreDevice() {
     contentReg := masterReg.Data
 
     // Write to aes input block
-    when(localAddr === AesAddr.BLOCK_IN) {
-      val local = masterReg.Addr - AesAddr.BLOCK_IN
+    when(blockInMask) {
       for (i <- 0 until masterReg.ByteEn.getWidth) {
-        val addr = local + UInt(i)
         when (masterReg.ByteEn(i) === Bits(1)) {
-          blockIn(addr) := masterReg.Data(8*i+7, 8*i)
+          blockIn(localAddr(7,0) + i.U) := masterReg.Data(8*i+7, 8*i)
         }
       }
     }

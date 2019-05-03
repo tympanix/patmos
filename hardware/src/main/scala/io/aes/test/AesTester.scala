@@ -50,7 +50,7 @@ class AesTester(dut: Aes) extends Tester(dut) {
       testBlock(i*4+1),
       testBlock(i*4)
     )
-    send(row, AesAddr.BLOCK_IN + (i*4).U)
+    write(row, AesAddr.BLOCK_IN + (i*4).U)
   }
   step(1)
   
@@ -66,7 +66,7 @@ class AesTester(dut: Aes) extends Tester(dut) {
       testKey(i*4+1),
       testKey(i*4)
     )
-    send(row, AesAddr.KEY + (i*4).U)
+    write(row, AesAddr.KEY + (i*4).U)
   }
   step(1)
 

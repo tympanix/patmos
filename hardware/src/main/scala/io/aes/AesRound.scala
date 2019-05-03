@@ -10,14 +10,15 @@ import Chisel._
 
 class AesRound extends Module {
   val io = IO(new Bundle {
-    val keyIn = Input(Vec(16, UInt(width = 8)))
+    val keyIn = Input(Vec(32, UInt(width = 8)))
     val blockIn = Input(Vec(16, UInt(width = 8)))
     val validIn = Input(Bool())
     val readyIn = Input(Bool())
     val iterIn = Input(UInt(width = 4))
-    val keyOut = Output(Vec(16, UInt(width = 8)))
+    val keyOut = Output(Vec(32, UInt(width = 8)))
     val blockOut = Output(Vec(16, UInt(width = 8)))
     val validOut = Output(Bool())
+    val readyOut = Output(Bool())
   })
 
   val sBoxModule = Module(new SBox)
@@ -36,7 +37,7 @@ class AesRound extends Module {
 
   //val block = Reg(Vec(16, UInt(width = 8)))
   val block = Vec(16, Reg(init = Bits(8)))
-  val roundKey = Reg(Vec(16, UInt(width = 8)))
+  val roundKey = Reg(Vec(32, UInt(width = 8)))
   val count = Reg(init = UInt(0, 4))
   val iter = Reg(init = UInt(0, 4))
 
@@ -61,6 +62,7 @@ class AesRound extends Module {
 
   // Static output signal assignments
   io.validOut := false.B
+  io.readyOut := false.B
   io.keyOut := roundKey
   io.blockOut := block
   
@@ -76,6 +78,7 @@ class AesRound extends Module {
         count := 0.U
         iter := io.iterIn
         roundKey := io.keyIn
+        io.readyOut := true.B
         when (io.iterIn === 0.U) {
           state := sAddRoundKey
         } .otherwise {

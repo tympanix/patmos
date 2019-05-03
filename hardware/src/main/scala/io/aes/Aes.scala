@@ -46,6 +46,9 @@ class Aes() extends CoreDevice() {
 
   // Constants
   val DATA_WIDTH = 32
+  
+  // Internal modules
+  val aesCore = Module(new AesCore)
 
   // Register for requests from OCP master
   val masterReg = Reg(next = io.ocp.M)
@@ -58,9 +61,11 @@ class Aes() extends CoreDevice() {
   val keyMask = (localAddr(15,12) === AesAddr.KEY(15,12))
   val blockOutMask = (localAddr(15,12) === AesAddr.BLOCK_OUT(15,12))
 
+  // Registers
   val key = Mem(UInt(width = 8), 32)
   val blockIn = Mem(UInt(width = 8), 16)
   val blockOut = Mem(UInt(width = 8), 16)
+  val busy = Reg(Bool(), init = false.B)
   
   val contentReg = Reg(init = UInt(42, width = DATA_WIDTH))
 
@@ -68,26 +73,40 @@ class Aes() extends CoreDevice() {
   io.blockIn := blockIn
   io.key := key
   io.blockOut := blockOut
+  
+  // Default signals
+  aesCore.io.keyIn := key
+  aesCore.io.blockIn := blockIn
+  aesCore.io.validIn := false.B
+  aesCore.io.readyIn := true.B
+  aesCore.io.mode := AesMode.ECB
+  aesCore.io.keyLength := AesKey.L128
 
   // Default OCP response
   io.ocp.S.Resp := OcpResp.NULL
   io.ocp.S.Data := Bits(0, width = DATA_WIDTH)
+  
+  // Wait for computation to finish
+  when (aesCore.io.validOut) {
+    busy := false.B
+  }
 
   // Handle OCP reads
   when (masterReg.Cmd === OcpCmd.RD) {
-    io.ocp.S.Resp := OcpResp.DVA
     io.ocp.S.Data := contentReg + 5.U
 
     // Read aes block result
     when (blockOutMask) {
-      io.ocp.S.Resp := OcpResp.DVA
       val offset = localAddr(7,0)
-      io.ocp.S.Data := Cat(
-        blockOut(offset+3.U),
-        blockOut(offset+2.U),
-        blockOut(offset+1.U),
-        blockOut(offset+0.U)
-      )
+      when (!busy) {
+        io.ocp.S.Resp := OcpResp.DVA
+        io.ocp.S.Data := Cat(
+          aesCore.io.blockOut(offset+3.U),
+          aesCore.io.blockOut(offset+2.U),
+          aesCore.io.blockOut(offset+1.U),
+          aesCore.io.blockOut(offset+0.U)
+        )
+      }
     }
   }
 
@@ -116,9 +135,11 @@ class Aes() extends CoreDevice() {
 
     // Start computation
     when (localAddr === AesAddr.START) {
-      io.ocp.S.Resp := OcpResp.DVA
-      for (i <- 0 until 16) {
-        blockOut(i) := (i+1).U
+      aesCore.io.validIn := true.B
+
+      when (aesCore.io.readyOut) {
+        io.ocp.S.Resp := OcpResp.DVA
+        busy := true.B
       }
     }
   }

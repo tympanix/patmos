@@ -14,10 +14,13 @@ class AesCore extends Module {
   val io = IO(new Bundle {
     val keyIn = Input(Vec(32, UInt(width = 8)))
     val blockIn = Input(Vec(16, UInt(width = 8)))
-    val start = Input(Bool())
+    val validIn = Input(Bool())
     val mode = Input(Bits(width = 8))
+    val readyIn = Input(Bool())
     val keyLength = Input(Bits(width = 2))
+    val readyOut = Output(Bool())
     val blockOut = Output(Vec(16, UInt(width = 8)))
+    val validOut = Output(Bool())
   })
 
   // Modules
@@ -39,8 +42,12 @@ class AesCore extends Module {
   val sWait :: sRoundGive :: sRoundRecieve:: sFinish :: Nil = Enum(UInt(), 4)
   val state = Reg(init = sWait)
   
-  // Default signals
+  // Default output
   io.blockOut := aesRoundModule.io.blockOut
+  io.validOut := false.B
+  io.readyOut := false.B
+
+  // Default signals
   aesRoundModule.io.keyIn := aesRoundModule.io.keyOut
   aesRoundModule.io.blockIn := aesRoundModule.io.blockOut
   aesRoundModule.io.validIn := false.B
@@ -53,7 +60,8 @@ class AesCore extends Module {
   switch(state) {
     // Wait until start signal is high
     is (sWait) {
-      when (io.start) {
+      io.readyOut := true.B
+      when (io.validIn) {
         state := sRoundGive
       } .otherwise {
         state := sWait
@@ -93,6 +101,11 @@ class AesCore extends Module {
     // All rounds have been ran, output the encryption block
     is (sFinish) {
       io.blockOut := aesRoundModule.io.blockOut
+      io.validOut := true.B
+      
+      when (io.readyIn) {
+        state := sWait
+      }
     }
   }
 }

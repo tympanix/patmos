@@ -22,18 +22,27 @@ class AesCoreTester(dut: AesCore) extends Tester(dut) {
   }
   poke(dut.io.keyLength, AesKey.L128.litValue()) 
   poke(dut.io.mode, true)
-  poke(dut.io.start, true)
+  poke(dut.io.validIn, true)
+  
+  // Wait for handshake
+  while (peek(dut.io.readyOut) == 0) {
+    step(1)
+  }
   
   step(1)
-  poke(dut.io.start, false)
+  poke(dut.io.validIn, false)
 
-
-  step(500)
-
+  // Wait for handshake
+  while (peek(dut.io.validOut) == 0) {
+    step(1)
+  }
 
   for (i <- 0 to 15) {
     expect(dut.io.blockOut(i), testBlockOut(i))
   }
+  
+  poke(dut.io.readyIn, true)
+  step(1)
 
 }
 

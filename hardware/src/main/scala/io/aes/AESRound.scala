@@ -16,7 +16,7 @@ import Chisel._
 //class AES() extends CoreDevice()
 
 
-class AES extends Module {
+class AesRound extends Module {
   val io = IO(new Bundle {
     val keyIn = Input(Vec(16, UInt(width = 8)))
     val blockIn = Input(Vec(16, UInt(width = 8)))
@@ -173,7 +173,7 @@ class AES extends Module {
 }
 
 // Generate the Verilog code by invoking the Driver
-object AESMain extends App {
+object AesRoundMain extends App {
   println("Generating the AES hardware")
-  chiselMain(Array("--targetDir", "generated"), () => Module(new AES()))
+  chiselMain(Array("--targetDir", "generated"), () => Module(new AesRound()))
 }

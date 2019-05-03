@@ -2,20 +2,20 @@ package aes
 
 import Chisel._
 
-object AES extends DeviceObject {
+object Aes extends DeviceObject {
 
   def init(params: Map[String, String]) = {}
 
-  def create(params: Map[String, String]) : AES = {
-    Module(new AES())
+  def create(params: Map[String, String]) : Aes = {
+    Module(new Aes())
   }
 
   trait Pins {}
 }
 
-class AES() extends CoreDevice() {
+class Aes() extends CoreDevice() {
 
-  override val io = new CoreDeviceIO() with AES.Pins
+  override val io = new CoreDeviceIO() with Aes.Pins
 
   // Constants
   val DATA_WIDTH = 32

@@ -1,20 +1,12 @@
-package aes
+package io
 
 import Chisel._
 
-//object AES extends DeviceObject {
-//
-//  def init(params: Map[String, String]) = {}
-//
-//  def create(params: Map[String, String]) : AES = {
-//    Module(new AES())
-//  }
-//
-//  trait Pins {}
-//}
-//
-//class AES() extends CoreDevice()
-
+/* AesRound is the hardware module responsible for making one round of
+ * the AES encryption algorithm.
+ * Depending on the input, i.e which round of AES is chosen, it will perform
+ * the corresponding encryption round.
+ */
 
 class AesRound extends Module {
   val io = IO(new Bundle {
@@ -174,6 +166,6 @@ class AesRound extends Module {
 
 // Generate the Verilog code by invoking the Driver
 object AesRoundMain extends App {
-  println("Generating the AES hardware")
+  println("Generating the AesRound hardware")
   chiselMain(Array("--targetDir", "generated"), () => Module(new AesRound()))
 }

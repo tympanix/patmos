@@ -1,8 +1,8 @@
-package aes
+package io
 
 import Chisel._
 
-class AESTester(dut: AES) extends Tester(dut) {
+class AesRoundTester(dut: AesRound) extends Tester(dut) {
 
   val testKeys = List(
     List(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
@@ -67,11 +67,11 @@ class AESTester(dut: AES) extends Tester(dut) {
 
 }
 
-object AESTester {
-  println("Testing the AES Module")
+object AesRoundTester {
+  println("Testing the AesRound Module")
     def main(args: Array[String]): Unit = {
-      chiselMainTest(Array[String]("--genHarness", "--test", "--backend", "c", "--compile", "--vcd", "--targetDir", "generated"), () => Module(new AES())) {
-        c => new AESTester(c)
+      chiselMainTest(Array[String]("--genHarness", "--test", "--backend", "c", "--compile", "--vcd", "--targetDir", "generated"), () => Module(new AesRound())) {
+        c => new AesRoundTester(c)
     }
   }
 }

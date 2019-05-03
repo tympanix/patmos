@@ -1,4 +1,4 @@
-package aes
+package io
 import Chisel._
 
 class SBoxIO extends Bundle {

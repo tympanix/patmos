@@ -1,6 +1,8 @@
-package aes
+package io
 
 import Chisel._
+
+import ocp._
 
 object Aes extends DeviceObject {
 

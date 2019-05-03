@@ -15,18 +15,20 @@ class AesCore extends Module {
     val keyIn = Input(Vec(32, UInt(width = 8)))
     val blockIn = Input(Vec(16, UInt(width = 8)))
     val start = Input(Bool())
-    val mode = Input(Bits(width = 2))
+    val mode = Input(Bits(width = 8))
     val keyLength = Input(Bits(width = 2))
     val blockOut = Output(Vec(16, UInt(width = 8)))
   })
 
   // Modules
   val aesRoundModule = Module(new AesRound)
-  val lastRound = MuxCase(10, Array(
-    io.keyLength === AesKey.L128 -> 10.U,
-    io.keyLength === AesKey.L192 -> 12.U, 
-    io.keyLength === AesKey.L256 -> 14.U
-  ))
+
+  // Mux to chose the last round based on key length
+  val lastRound = MuxCase(10.U, Array(
+    (io.keyLength === AesKey.L128) -> 10.U,
+    (io.keyLength === AesKey.L192) -> 12.U, 
+    (io.keyLength === AesKey.L256) -> 14.U)
+  )
 
   // Registers
   val roundNum = Reg(init = UInt(0, 4))
@@ -38,6 +40,12 @@ class AesCore extends Module {
   val state = Reg(init = sWait)
   
   // Default signals
+  io.blockOut := aesRoundModule.io.blockOut
+  aesRoundModule.io.keyIn := aesRoundModule.io.keyOut
+  aesRoundModule.io.blockIn := aesRoundModule.io.blockOut
+  aesRoundModule.io.validIn := false.B
+  aesRoundModule.io.readyIn := false.B
+  aesRoundModule.io.iterIn := roundNum
 
   // Default register assignments
   state := state
@@ -46,9 +54,6 @@ class AesCore extends Module {
     // Wait until start signal is high
     is (sWait) {
       when (io.start) {
-        aesRoundModule.io.blockIn := io.blockIn
-        aesRoundModule.io.keyIn := io.keyIn // io.keyIn is currently 32 bits to make room for any sized key of the 3. What to do?
-        aesRoundModule.io.iterIn := roundNum
         state := sRoundGive
       } .otherwise {
         state := sWait
@@ -58,8 +63,12 @@ class AesCore extends Module {
     // When the aes round is ready to take input
     is (sRoundGive) {
       aesRoundModule.io.validIn := true.B
-      
-      when (aesRoundModule.io.readyIn) {
+
+      when (aesRoundModule.io.readyOut) {
+        when (roundNum === 0.U) {
+          aesRoundModule.io.blockIn := io.blockIn
+          aesRoundModule.io.keyIn := io.keyIn
+        }
         state := sRoundRecieve 
       } .otherwise {
         state := sRoundGive
@@ -69,14 +78,13 @@ class AesCore extends Module {
     // Wait for the aes round to give back a round result
     is (sRoundRecieve) {
       when (aesRoundModule.io.validOut) {
+        state := sRoundGive
+        aesRoundModule.io.readyIn := true.B
+        roundNum := roundNum + 1.U 
+ 
         when (isLast) {
           state := sFinish
-        } .otherwise {
-          aesRoundModule.io.blockIn := aesRoundModule.io.blockOut
-          aesRoundModule.io.keyIn := aesRoundModule.io.keyOut
-          roundNum := roundNum + 1.U
-          aesRoundModule.io.iterIn := roundNum
-        }
+        } 
       } .otherwise {
         state := sRoundRecieve
       }

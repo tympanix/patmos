@@ -2,10 +2,10 @@ package io
 import Chisel._
 
 class KeyScheduleIO extends Bundle {
-  val keyIn = Input(Vec(16, UInt(width = 8)))
+  val keyIn = Input(Vec(32, UInt(width = 8)))
   val iteration = Input(UInt(width = 4))
   val validIn = Input(Bool())
-  val roundKeyOut = Output(Vec(16, UInt(width = 8)))
+  val roundKeyOut = Output(Vec(32, UInt(width = 8)))
   val validOut = Output(Bool())
 }
 

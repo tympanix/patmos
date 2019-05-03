@@ -1,4 +1,4 @@
-package io
+package aes
 
 import Chisel._
 
@@ -22,6 +22,10 @@ class AES() extends CoreDevice() {
 
   // Register for requests from OCP master
   val masterReg = Reg(next = io.ocp.M)
+
+  val key = Mem(UInt(width = 8), 32)
+  val blockIn = Mem(UInt(width = 8), 16)
+  val blockOut = Mem(UInt(width = 8), 16)
   
   val contentReg = Reg(init = UInt(42, width = DATA_WIDTH))
 
@@ -33,6 +37,8 @@ class AES() extends CoreDevice() {
   when (masterReg.Cmd === OcpCmd.RD) {
     io.ocp.S.Resp := OcpResp.DVA
     io.ocp.S.Data := contentReg + 5.U
+
+    
   }
 
   // Handle OCP writes

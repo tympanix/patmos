@@ -56,10 +56,6 @@ class AesTester(dut: Aes) extends Tester(dut) {
   }
   step(1)
   
-  for (i <- 0 until 16) {
-    expect(dut.io.blockIn(i), testBlock(i).litValue())
-  }
-  
   // Write key into aes device
   for (i <- 0 until 4) {
     val row = Cat(
@@ -72,10 +68,6 @@ class AesTester(dut: Aes) extends Tester(dut) {
   }
   step(1)
 
-  for (i <- 0 until 16) {
-    expect(dut.io.key(i), testKey(i).litValue())
-  }
-  
   // Start computation
   write(1.U, AesAddr.START)
   step(1)

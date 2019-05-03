@@ -13,9 +13,6 @@ object Aes extends DeviceObject {
   }
 
   trait Pins {
-    val blockIn = Output(Vec(16, UInt(width = 8)))
-    val key = Output(Vec(32, UInt(width = 8)))
-    val blockOut = Output(Vec(16, UInt(width = 8)))
   }
 }
 
@@ -69,11 +66,6 @@ class Aes() extends CoreDevice() {
   
   val contentReg = Reg(init = UInt(42, width = DATA_WIDTH))
 
-  // Default output
-  io.blockIn := blockIn
-  io.key := key
-  io.blockOut := blockOut
-  
   // Default signals
   aesCore.io.keyIn := key
   aesCore.io.blockIn := blockIn

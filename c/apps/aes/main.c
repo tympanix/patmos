@@ -10,7 +10,7 @@
 
 // Take four words, which are in succession of eachother and return them as a 32 bit result
 int word(unsigned char input[]) {
-	return ((int)input << 24) | ((int)input[1] << 16) | ((int)input[2] << 8) | (int)input[3];
+	return ((int)input[3] << 24) | ((int)input[2] << 16) | ((int)input[1] << 8) | (int)input[0];
 }
 
 int main(int argc, char **argv) {
@@ -18,8 +18,7 @@ int main(int argc, char **argv) {
 	// Block to be used for AES 128 encryption
 	unsigned char plain_text[16] = {0xf3, 0x44, 0x81, 0xec, 0x3c, 0xc6, 0x27, 0xba, 0xcd, 0x5d, 0xc3, 0xfb, 0x08, 0xf2, 0x73, 0xe6};
 
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// Encryption key. Should we give 16 or 32 here? 32 is used internally in the hardware
+	// Encryption key
 	unsigned char key[16] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 	// Encryption result
@@ -29,15 +28,16 @@ int main(int argc, char **argv) {
 
 	// Write key and block input to mem
 	for (int i = 0; i < 4; i++) {
-		io_base_ptr[BLOCK_IN_OFFSET + i] = 0x12345;
+		io_base_ptr[KEY_OFFSET + i] = 0x0;
+		io_base_ptr[BLOCK_IN_OFFSET + i] = word(plain_text+(i*4));
 	}
 
 	// Write the configuration
-//	io_base_ptr[CONF_KEY_LENGTH] = 1;
-//	io_base_ptr[CONF_MODE] = 0;
 	io_base_ptr[CONF_START] = 1;
 	
-	printf("%x\n", io_base_ptr[BLOCK_OUT_OFFSET]);
+	for (int i = 0; i < 4; i++) {
+		printf("%x\n", io_base_ptr[BLOCK_OUT_OFFSET + i]);
+	}
 
   	return 0;
 }

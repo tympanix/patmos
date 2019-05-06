@@ -1,13 +1,7 @@
 package io
 import Chisel._
 
-class SBoxIO extends Bundle {
-  val in = Input(UInt(width = 8))
-  val out = Output(UInt(width = 8))
-}
-
-class SBox extends Module {
-  val io = IO(new SBoxIO)
+trait SBoxValues {
 
   val SBOX_VALUES = List(
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -29,6 +23,15 @@ class SBox extends Module {
   )
 
   val SBOX = Reg(init = Vec(SBOX_VALUES.map(v => Bits(v, 8))))
+}
+
+class SBoxIO extends Bundle {
+  val in = Input(UInt(width = 8))
+  val out = Output(UInt(width = 8))
+}
+
+class SBox extends Module with SBoxValues {
+  val io = IO(new SBoxIO)
 
   def rotl(byte: UInt, n: Int): UInt = {
     return Cat(byte(7-n,0), byte(7,n))

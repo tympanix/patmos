@@ -15,12 +15,9 @@ class KeyScheduleIO extends Bundle {
   * thus it has to be given a key to expand on and an iteration value.
   *
   */
-class KeySchedule extends Module {
+class KeySchedule extends Module with SBoxValues {
   val io = IO(new KeyScheduleIO)
   
-  val sbox = Module(new SBox())
-  
-  // TODO: Can we calculate RCON to save space?
   val RCON_VALUES = List(0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36) 
   val RCON = Reg(init = Vec(RCON_VALUES.map(v => v.U)))
 
@@ -34,50 +31,14 @@ class KeySchedule extends Module {
    * Perform rcon_i operation on the left most byte.
    * Perform SBox operation on the four bytes in the word
   */
-  val t = Reg(Vec(4, UInt(width = 8)))
+  val t = Wire(Vec(4, UInt(width = 8)))
 
-  // Default signals
-  sbox.io.in := io.keyIn(13)
+  io.validOut := true.B
 
-  val sWait :: sSub1 :: sSub2 :: sSub3 :: sSub4 :: sOutput :: Nil = Enum(UInt(), 6)
-  val state = Reg(init = sWait)
-
-  switch(state) {
-    is (sWait) {
-      when (io.validIn) {
-        state := sSub1
-      }
-    }
-
-    is (sSub1) {
-      sbox.io.in := io.keyIn(13) 
-      t(0) := sbox.io.out ^ RCON(io.iteration)
-      state := sSub2
-    }
-
-    is (sSub2) {
-      sbox.io.in := io.keyIn(14)
-      t(1) := sbox.io.out
-      state := sSub3
-    }
-
-    is (sSub3) {
-      sbox.io.in := io.keyIn(15)
-      t(2) := sbox.io.out
-      state := sSub4
-    }
-
-    is (sSub4) {
-      sbox.io.in := io.keyIn(12)
-      t(3) := sbox.io.out
-      state := sOutput
-    }
-    
-    is (sOutput) {
-      io.validOut := true.B
-      state := sWait
-    }
-  }
+  t(0) := SBOX(io.keyIn(13)) ^ RCON(io.iteration)
+  t(1) := SBOX(io.keyIn(14))
+  t(2) := SBOX(io.keyIn(15))
+  t(3) := SBOX(io.keyIn(12))
 
   // Xor t with four bytes of the previous key. This will be the first 4 bytes in roundKey.
   val w1 = Wire(Vec(4, UInt(width = 8)))

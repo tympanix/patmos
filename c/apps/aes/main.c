@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <machine/patmos.h>
 
-#define KEY_OFFSET 			(0x00001000 >> 2)
-#define BLOCK_IN_OFFSET 	(0x00002000 >> 2)
-#define BLOCK_OUT_OFFSET	(0x00003000 >> 2)
-#define CONF_KEY_LENGTH		(0x00000100 >> 2)
-#define CONF_MODE			(0x00000200 >> 2)
-#define CONF_START			(0x00000004 >> 2)
+#define KEY_OFFSET			(0x1000 >> 2)
+#define BLOCK_IN_OFFSET		(0x2000 >> 2)
+#define BLOCK_OUT_OFFSET	(0x3000 >> 2)
+#define CONF_KEY_LENGTH		(0x0100 >> 2)
+#define CONF_MODE			(0x0200 >> 2)
+#define CONF_START			(0x0004 >> 2)
 
 // Take four words, which are in succession of eachother and return them as a 32 bit result
 int word(unsigned char input[]) {
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 	// Encryption result
 	unsigned char cipher_text[16];
 
-	volatile _IODEV int *io_base_ptr = (volatile _IODEV int *) 0xf00b0000;
+	volatile _IODEV int *io_base_ptr = (volatile _IODEV int *) PATMOS_IO_AES;
 	volatile _IODEV int *io_timer_ptr = (volatile _IODEV int *) PATMOS_IO_TIMER;
 	
 	int start, end;
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 		io_base_ptr[BLOCK_IN_OFFSET + i] = word(plain_text+(i*4));
 	}
 
-	// Write the configuration
+	// Start the block cipher
 	io_base_ptr[CONF_START] = 1;
 	
 	// Retrieve AES result

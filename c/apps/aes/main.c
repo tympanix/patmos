@@ -25,15 +25,37 @@ int main(int argc, char **argv) {
 	unsigned char cipher_text[16];
 
 	volatile _IODEV int *io_base_ptr = (volatile _IODEV int *) 0xf00b0000;
+	volatile _IODEV int *io_timer_ptr = (volatile _IODEV int *) PATMOS_IO_TIMER;
+	
+	int start, end;
 
-	// Write key and block input to mem
+
+	// Write key input to mem
 	for (int i = 0; i < 4; i++) {
 		io_base_ptr[KEY_OFFSET + i] = 0x0;
+	}
+
+	// Begin timer 
+	start = io_timer_ptr[1];
+	
+	// Write block input to mem
+	for (int i = 0; i < 4; i++) {
 		io_base_ptr[BLOCK_IN_OFFSET + i] = word(plain_text+(i*4));
 	}
 
+
 	// Write the configuration
 	io_base_ptr[CONF_START] = 1;
+	
+	// Retrieve AES result
+	for (int i = 0; i < 4; i++) {
+		cipher_text[i*4] = io_base_ptr[BLOCK_OUT_OFFSET + i];
+	}
+
+	// End timer
+	end = io_timer_ptr[1];
+
+	printf("Clock cycles spent on AES: %d\n", end-start);
 	
 	for (int i = 0; i < 4; i++) {
 		printf("%x\n", io_base_ptr[BLOCK_OUT_OFFSET + i]);

@@ -29,7 +29,6 @@ int main(int argc, char **argv) {
 	
 	int start, end;
 
-
 	// Write key input to mem
 	for (int i = 0; i < 4; i++) {
 		io_base_ptr[KEY_OFFSET + i] = 0x0;
@@ -42,7 +41,6 @@ int main(int argc, char **argv) {
 	for (int i = 0; i < 4; i++) {
 		io_base_ptr[BLOCK_IN_OFFSET + i] = word(plain_text+(i*4));
 	}
-
 
 	// Write the configuration
 	io_base_ptr[CONF_START] = 1;

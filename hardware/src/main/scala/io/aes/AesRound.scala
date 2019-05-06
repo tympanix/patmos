@@ -21,16 +21,12 @@ class AesRound extends Module {
     val readyOut = Output(Bool())
   })
 
-  val sBoxModule = Module(new SBox)
+  // Modules
+  val subBytesModule = Module(new SubBytes)
   val shiftRowsModule = Module(new ShiftRows)
   val mixColumnsModule = Module(new MixColumns)
   val keyScheduleModule = Module(new KeySchedule)
 
-//  sBoxModule.io <> DontCare
-//  shiftRowsModule.io <> DontCare
-//  mixColumnsModule.io <> DontCare
-//  keyScheduleModule.io <> DontCare
-  
   // Registers and wires for maintaining state
   val sWait :: sSubBytes :: sShiftRows :: sMixColumns :: sAddRoundKey :: sKeySchedule :: sFinished :: Nil = Enum(UInt(), 7)
   val state = Reg(init = sWait)
@@ -48,7 +44,7 @@ class AesRound extends Module {
   val col = Vec(mkcol(0), mkcol(1), mkcol(2), mkcol(3))
 
   // Default signals
-  sBoxModule.io.in := block(0)
+  subBytesModule.io.in := block
   shiftRowsModule.io.bin := block
 
   mixColumnsModule.io.in(0) := block(0)
@@ -89,15 +85,9 @@ class AesRound extends Module {
 
     // Perform sub bytes operation
     is (sSubBytes) {
-      sBoxModule.io.in := block(count)
-      block(count) := sBoxModule.io.out
-      count := count + 1.U
-      state := sSubBytes
-
-      when (count === 15.U) {
-        count := 0.U
-        state := sShiftRows
-      }
+      subBytesModule.io.in := block
+      block := subBytesModule.io.out
+      state := sShiftRows
     }
 
     // Perform shift rows operation

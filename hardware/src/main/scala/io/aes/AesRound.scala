@@ -27,7 +27,7 @@ class AesRound extends Module {
   val mixColumnsModule = Module(new MixColumns)
   val keyScheduleModule = Module(new KeySchedule)
 
-  // Registers and wires for maintaining state
+  // State type and register for FSMD
   val sWait :: sSubBytes :: sShiftRows :: sMixColumns :: sAddRoundKey :: sKeySchedule :: sFinished :: Nil = Enum(UInt(), 7)
   val state = Reg(init = sWait)
 

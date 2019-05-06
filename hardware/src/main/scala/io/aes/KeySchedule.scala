@@ -22,18 +22,9 @@ class KeySchedule extends Module with SBoxValues {
   val RCON = Reg(init = Vec(RCON_VALUES.map(v => v.U)))
 
   // Default signals values
-  io.validOut := false.B
-  // io.sbox <> DontCare
-
-  /* Assign the value of the four bytes from the previous key and rotate them.
-   * Rotate the 8 high bits to be the lower 8 bits in a circular rotate.
-   * Assumes that a low index on the vector is MSB and high index is LSB.
-   * Perform rcon_i operation on the left most byte.
-   * Perform SBox operation on the four bytes in the word
-  */
-  val t = Wire(Vec(4, UInt(width = 8)))
-
   io.validOut := true.B
+
+  val t = Wire(Vec(4, UInt(width = 8)))
 
   t(0) := SBOX(io.keyIn(13)) ^ RCON(io.iteration)
   t(1) := SBOX(io.keyIn(14))

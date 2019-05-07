@@ -28,6 +28,12 @@ int main(int argc, char **argv) {
 	volatile _IODEV int *io_timer_ptr = (volatile _IODEV int *) PATMOS_IO_TIMER;
 	
 	int start, end;
+	
+	printf("Input block:\n");
+	for (int i = 0; i < 16; i++) {
+		printf("%x ", plain_text[i]);
+	}
+	printf("\n");
 
 	// Write key input to mem
 	for (int i = 0; i < 4; i++) {
@@ -47,17 +53,28 @@ int main(int argc, char **argv) {
 	
 	// Retrieve AES result
 	for (int i = 0; i < 4; i++) {
-		cipher_text[i*4] = io_base_ptr[BLOCK_OUT_OFFSET + i];
+		int block = io_base_ptr[BLOCK_OUT_OFFSET + i];
 	}
 
 	// End timer
 	end = io_timer_ptr[1];
 
-	printf("Clock cycles spent on AES: %d\n", end-start);
 	
+	printf("\n");
+	printf("Output block:\n");
 	for (int i = 0; i < 4; i++) {
-		printf("%x\n", io_base_ptr[BLOCK_OUT_OFFSET + i]);
+		int block = io_base_ptr[BLOCK_OUT_OFFSET + i];
+		memcpy(cipher_text + (i*4), &block, sizeof(int));
 	}
 
+	for (int i = 0; i < 16; i=i+4) {
+		printf("%02x ", cipher_text[i+3]);
+		printf("%02x ", cipher_text[i+2]);
+		printf("%02x ", cipher_text[i+1]);
+		printf("%02x ", cipher_text[i+0]);
+	}
+
+
+	printf("\n\nClock cycles spent on AES: %d\n", end-start);
   	return 0;
 }
